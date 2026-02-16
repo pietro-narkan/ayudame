@@ -159,6 +159,17 @@ body {
   font-weight: 600;
 }
 
+.splash-photo {
+  display: block;
+  margin: 1rem auto 0;
+  width: min(250px, 72vw);
+  max-height: 280px;
+  object-fit: cover;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 0 8px 0 #1d263744;
+}
+
 .btn {
   appearance: none;
   border: 3px solid var(--ink);

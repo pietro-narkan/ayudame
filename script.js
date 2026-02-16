@@ -5,6 +5,7 @@ const startBtn = document.getElementById("startBtn");
 const yesBtn = document.getElementById("yesBtn");
 const noBtn = document.getElementById("noBtn");
 const replayBtn = document.getElementById("replayBtn");
+const hint = document.getElementById("hint");
 const choices = document.getElementById("choices");
 const confettiLayer = document.getElementById("confettiLayer");
 const fireworksCanvas = document.getElementById("fireworksCanvas");
@@ -17,12 +18,21 @@ const defaultTrackPath = championsAudio?.querySelector("source")?.getAttribute("
 
 const panels = [splash, invite, accepted];
 
+const dodgeLines = [
+  "Uy... ese No trae rueditas.",
+  "No se deja tocar ni por casualidad.",
+  "Modo escurridizo activado.",
+  "Ese boton esta en cardio full time.",
+  "Tranqui, el Si esta quietito y feliz."
+];
+
 const confettiColors = ["#ff5a34", "#ffd454", "#31c8aa", "#1ea5ff", "#ff5c8a"];
 
 const fireworksCtx = fireworksCanvas ? fireworksCanvas.getContext("2d") : null;
 const rockets = [];
 const sparks = [];
 
+let dodgeCount = 0;
 let fireworksFrameId = 0;
 let fireworksWaveId = 0;
 let fireworksStopId = 0;
@@ -56,6 +66,13 @@ function moveNoButton() {
 function dodge(event) {
   if (event) {
     event.preventDefault();
+  }
+
+  dodgeCount += 1;
+
+  if (hint) {
+    hint.hidden = false;
+    hint.textContent = dodgeLines[(dodgeCount - 1) % dodgeLines.length];
   }
 
   moveNoButton();
@@ -497,6 +514,13 @@ function stopChampions() {
 }
 
 function resetInvite() {
+  dodgeCount = 0;
+
+  if (hint) {
+    hint.hidden = true;
+    hint.textContent = "";
+  }
+
   noBtn.style.removeProperty("left");
   noBtn.style.removeProperty("top");
 
