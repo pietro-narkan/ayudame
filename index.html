@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitacion Legendaria</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Bangers&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="scene" id="scene">
+    <div class="bg-shapes" aria-hidden="true">
+      <span class="shape s1"></span>
+      <span class="shape s2"></span>
+      <span class="shape s3"></span>
+      <span class="shape s4"></span>
+      <span class="shape s5"></span>
+    </div>
+
+    <main class="app" aria-live="polite">
+      <section class="panel panel-active" id="splash">
+        <p class="kicker">Atencion, mensaje en ruta</p>
+        <h1 class="title">Hay algo que te puede sacar una sonrisa</h1>
+        <p class="subtitle">Cuando estes lista/o, toca el boton magico.</p>
+        <button class="btn btn-start pulse" id="startBtn" type="button">Tocame aqui</button>
+      </section>
+
+      <section class="panel panel-hidden" id="invite">
+        <p class="kicker">Redoble de tambores...</p>
+        <h2 class="title">Te ha invitado a salir Pietro Marchioni</h2>
+        <p class="subtitle">Invitacion abierta: sin fecha fija, sin presion, con ganas de pasarla bien.</p>
+        <p class="subtitle">Plan sugerido: risas, charla buena y una mini aventura improvisada.</p>
+
+        <div class="choices" id="choices">
+          <button class="btn btn-yes" id="yesBtn" type="button">Si, de una</button>
+          <button class="btn btn-no" id="noBtn" type="button">No, imposible</button>
+        </div>
+
+        <p class="hint" id="hint">Tip: el boton "No" esta entrenando para ser ninja.</p>
+      </section>
+
+      <section class="panel panel-hidden" id="accepted">
+        <p class="kicker">Estado actual: plan desbloqueado</p>
+        <h2 class="title">Esoooo, sabia que habia onda</h2>
+        <p class="subtitle">Queda abierta la invitacion para cuando te pinte: cafe, paseo o plan sorpresa.</p>
+        <p class="subtitle">Tu pones el momento, Pietro pone la energia y el humor.</p>
+        <button class="btn btn-start" id="replayBtn" type="button">Ver de nuevo</button>
+      </section>
+    </main>
+
+    <div id="confettiLayer" aria-hidden="true"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
