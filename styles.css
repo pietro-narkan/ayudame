@@ -102,7 +102,7 @@ body {
 
 .app {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   width: min(760px, 100%);
   min-height: 460px;
 }
@@ -231,6 +231,40 @@ body {
   font-size: 0.95rem;
   font-weight: 700;
   color: #35304e;
+}
+
+.audio-note {
+  margin: 0.9rem auto 0;
+  max-width: 35ch;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background: #fff4ca;
+  border: 2px dashed #21315488;
+  border-radius: 14px;
+  padding: 0.55rem 0.75rem;
+}
+
+.audio-note code {
+  font-family: "Consolas", "Courier New", monospace;
+  background: #ffffff;
+  border: 1px solid #21315444;
+  border-radius: 5px;
+  padding: 0 0.25em;
+}
+
+#fireworksCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 7;
+  transition: opacity 320ms ease;
+}
+
+#fireworksCanvas.active {
+  opacity: 1;
 }
 
 #confettiLayer {

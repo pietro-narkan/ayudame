@@ -8,6 +8,9 @@ const replayBtn = document.getElementById("replayBtn");
 const hint = document.getElementById("hint");
 const choices = document.getElementById("choices");
 const confettiLayer = document.getElementById("confettiLayer");
+const fireworksCanvas = document.getElementById("fireworksCanvas");
+const audioNote = document.getElementById("audioNote");
+const championsAudio = document.getElementById("championsAudio");
 
 const panels = [splash, invite, accepted];
 
@@ -21,7 +24,17 @@ const dodgeLines = [
 
 const confettiColors = ["#ff5a34", "#ffd454", "#31c8aa", "#1ea5ff", "#ff5c8a"];
 
+const fireworksCtx = fireworksCanvas ? fireworksCanvas.getContext("2d") : null;
+const rockets = [];
+const sparks = [];
+
 let dodgeCount = 0;
+let fireworksFrameId = 0;
+let fireworksWaveId = 0;
+let fireworksStopId = 0;
+let fireworksOn = false;
+let canvasWidth = window.innerWidth;
+let canvasHeight = window.innerHeight;
 
 function setPanel(nextPanel) {
   panels.forEach((panel) => {
@@ -77,25 +90,244 @@ function burstConfetti(amount) {
   }
 }
 
+function sizeFireworksCanvas() {
+  if (!fireworksCanvas || !fireworksCtx) {
+    return;
+  }
+
+  const ratio = Math.max(1, window.devicePixelRatio || 1);
+  canvasWidth = window.innerWidth;
+  canvasHeight = window.innerHeight;
+
+  fireworksCanvas.width = Math.round(canvasWidth * ratio);
+  fireworksCanvas.height = Math.round(canvasHeight * ratio);
+  fireworksCanvas.style.width = `${canvasWidth}px`;
+  fireworksCanvas.style.height = `${canvasHeight}px`;
+
+  fireworksCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+function launchRocket() {
+  rockets.push({
+    x: randomRange(canvasWidth * 0.08, canvasWidth * 0.92),
+    y: canvasHeight + randomRange(12, 95),
+    targetY: randomRange(canvasHeight * 0.12, canvasHeight * 0.55),
+    speed: randomRange(6.8, 9.6),
+    hue: randomRange(0, 360),
+    trail: []
+  });
+}
+
+function explode(x, y, baseHue) {
+  const count = Math.floor(randomRange(48, 90));
+
+  for (let index = 0; index < count; index += 1) {
+    const angle = randomRange(0, Math.PI * 2);
+    const speed = randomRange(1.6, 6.8);
+
+    sparks.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      gravity: randomRange(0.03, 0.06),
+      drag: randomRange(0.965, 0.99),
+      life: randomRange(36, 68),
+      ttl: randomRange(36, 68),
+      size: randomRange(1.2, 2.8),
+      hue: (baseHue + randomRange(-30, 30) + 360) % 360
+    });
+  }
+}
+
+function drawFireworks() {
+  if (!fireworksOn || !fireworksCtx) {
+    return;
+  }
+
+  fireworksCtx.globalCompositeOperation = "source-over";
+  fireworksCtx.fillStyle = "rgba(7, 10, 24, 0.22)";
+  fireworksCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+  fireworksCtx.globalCompositeOperation = "lighter";
+
+  for (let index = rockets.length - 1; index >= 0; index -= 1) {
+    const rocket = rockets[index];
+    rocket.trail.push({ x: rocket.x, y: rocket.y });
+    if (rocket.trail.length > 5) {
+      rocket.trail.shift();
+    }
+
+    rocket.y -= rocket.speed;
+    rocket.speed *= 0.994;
+
+    const rocketColor = `hsl(${rocket.hue.toFixed(0)} 100% 64%)`;
+    fireworksCtx.strokeStyle = rocketColor;
+    fireworksCtx.lineWidth = 2;
+    fireworksCtx.beginPath();
+    fireworksCtx.moveTo(rocket.x, rocket.y);
+
+    rocket.trail.forEach((point) => {
+      fireworksCtx.lineTo(point.x, point.y);
+    });
+
+    fireworksCtx.stroke();
+
+    if (rocket.y <= rocket.targetY) {
+      explode(rocket.x, rocket.y, rocket.hue);
+      rockets.splice(index, 1);
+    }
+  }
+
+  for (let index = sparks.length - 1; index >= 0; index -= 1) {
+    const spark = sparks[index];
+    spark.vx *= spark.drag;
+    spark.vy *= spark.drag;
+    spark.vy += spark.gravity;
+    spark.x += spark.vx;
+    spark.y += spark.vy;
+    spark.life -= 1;
+
+    if (spark.life <= 0) {
+      sparks.splice(index, 1);
+      continue;
+    }
+
+    const alpha = spark.life / spark.ttl;
+    fireworksCtx.fillStyle = `hsla(${spark.hue.toFixed(0)} 100% 62% / ${alpha.toFixed(3)})`;
+    fireworksCtx.beginPath();
+    fireworksCtx.arc(spark.x, spark.y, Math.max(0.6, spark.size * alpha + 0.35), 0, Math.PI * 2);
+    fireworksCtx.fill();
+  }
+
+  fireworksFrameId = requestAnimationFrame(drawFireworks);
+}
+
+function stopFireworksShow() {
+  fireworksOn = false;
+
+  if (fireworksWaveId) {
+    clearInterval(fireworksWaveId);
+    fireworksWaveId = 0;
+  }
+
+  if (fireworksStopId) {
+    clearTimeout(fireworksStopId);
+    fireworksStopId = 0;
+  }
+
+  if (fireworksFrameId) {
+    cancelAnimationFrame(fireworksFrameId);
+    fireworksFrameId = 0;
+  }
+
+  rockets.length = 0;
+  sparks.length = 0;
+
+  if (fireworksCtx) {
+    fireworksCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+  }
+
+  if (fireworksCanvas) {
+    fireworksCanvas.classList.remove("active");
+  }
+}
+
+function startFireworksShow(durationMs = 13000) {
+  if (!fireworksCanvas || !fireworksCtx) {
+    return;
+  }
+
+  stopFireworksShow();
+  sizeFireworksCanvas();
+  fireworksOn = true;
+  fireworksCanvas.classList.add("active");
+
+  for (let wave = 0; wave < 5; wave += 1) {
+    setTimeout(() => {
+      if (fireworksOn) {
+        launchRocket();
+      }
+    }, wave * 170);
+  }
+
+  fireworksWaveId = setInterval(() => {
+    const rocketsInWave = Math.random() > 0.48 ? 2 : 1;
+
+    for (let wave = 0; wave < rocketsInWave; wave += 1) {
+      setTimeout(() => {
+        if (fireworksOn) {
+          launchRocket();
+        }
+      }, wave * 120);
+    }
+  }, 320);
+
+  fireworksStopId = setTimeout(() => {
+    stopFireworksShow();
+  }, durationMs);
+
+  drawFireworks();
+}
+
+function playChampions() {
+  if (!championsAudio) {
+    return;
+  }
+
+  if (audioNote) {
+    audioNote.hidden = true;
+  }
+
+  championsAudio.currentTime = 0;
+  const playPromise = championsAudio.play();
+
+  if (playPromise && typeof playPromise.catch === "function") {
+    playPromise.catch(() => {
+      if (audioNote) {
+        audioNote.hidden = false;
+      }
+    });
+  }
+}
+
+function stopChampions() {
+  if (!championsAudio) {
+    return;
+  }
+
+  championsAudio.pause();
+  championsAudio.currentTime = 0;
+}
+
 function resetInvite() {
   dodgeCount = 0;
   hint.textContent = 'Tip: el boton "No" esta entrenando para ser ninja.';
-  noBtn.style.left = "258px";
-  noBtn.style.top = "108px";
+  noBtn.style.removeProperty("left");
+  noBtn.style.removeProperty("top");
+
+  if (audioNote) {
+    audioNote.hidden = true;
+  }
 }
 
 startBtn.addEventListener("click", () => {
+  stopFireworksShow();
+  stopChampions();
   setPanel(invite);
-  burstConfetti(45);
+  burstConfetti(55);
   requestAnimationFrame(moveNoButton);
 });
 
 yesBtn.addEventListener("click", () => {
   setPanel(accepted);
-  burstConfetti(170);
+  burstConfetti(220);
+  startFireworksShow();
+  playChampions();
 });
 
 replayBtn.addEventListener("click", () => {
+  stopFireworksShow();
+  stopChampions();
   resetInvite();
   setPanel(splash);
 });
@@ -105,7 +337,19 @@ replayBtn.addEventListener("click", () => {
 });
 
 window.addEventListener("resize", () => {
+  sizeFireworksCanvas();
+
   if (invite.classList.contains("panel-active")) {
     moveNoButton();
   }
 });
+
+if (championsAudio) {
+  championsAudio.addEventListener("error", () => {
+    if (audioNote) {
+      audioNote.hidden = false;
+    }
+  });
+}
+
+sizeFireworksCanvas();

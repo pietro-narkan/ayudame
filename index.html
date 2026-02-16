@@ -31,7 +31,7 @@
         <p class="kicker">Redoble de tambores...</p>
         <h2 class="title">Te ha invitado a salir Pietro Marchioni</h2>
         <p class="subtitle">Invitacion abierta: sin fecha fija, sin presion, con ganas de pasarla bien.</p>
-        <p class="subtitle">Plan sugerido: risas, charla buena y una mini aventura improvisada.</p>
+        <p class="subtitle">Plan sugerido: risas, charla buena y mini aventura improvisada.</p>
 
         <div class="choices" id="choices">
           <button class="btn btn-yes" id="yesBtn" type="button">Si, de una</button>
@@ -47,10 +47,17 @@
         <p class="subtitle">Queda abierta la invitacion para cuando te pinte: cafe, paseo o plan sorpresa.</p>
         <p class="subtitle">Tu pones el momento, Pietro pone la energia y el humor.</p>
         <button class="btn btn-start" id="replayBtn" type="button">Ver de nuevo</button>
+        <p class="audio-note" id="audioNote" hidden>
+          Para que suene Queen, agrega el archivo <code>assets/we-are-the-champions.mp3</code>
+        </p>
       </section>
     </main>
 
+    <canvas id="fireworksCanvas" aria-hidden="true"></canvas>
     <div id="confettiLayer" aria-hidden="true"></div>
+    <audio id="championsAudio" preload="auto">
+      <source src="assets/we-are-the-champions.mp3" type="audio/mpeg">
+    </audio>
   </div>
 
   <script src="script.js"></script>
