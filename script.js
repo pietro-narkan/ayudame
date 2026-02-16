@@ -9,6 +9,7 @@ const hint = document.getElementById("hint");
 const choices = document.getElementById("choices");
 const confettiLayer = document.getElementById("confettiLayer");
 const fireworksCanvas = document.getElementById("fireworksCanvas");
+const fireworksMessage = document.getElementById("fireworksMessage");
 const audioNote = document.getElementById("audioNote");
 const championsAudio = document.getElementById("championsAudio");
 
@@ -33,6 +34,7 @@ let fireworksFrameId = 0;
 let fireworksWaveId = 0;
 let fireworksStopId = 0;
 let fireworksOn = false;
+let messageHideId = 0;
 let canvasWidth = window.innerWidth;
 let canvasHeight = window.innerHeight;
 
@@ -90,6 +92,38 @@ function burstConfetti(amount) {
   }
 }
 
+function showFireworksMessage() {
+  if (!fireworksMessage) {
+    return;
+  }
+
+  if (messageHideId) {
+    clearTimeout(messageHideId);
+    messageHideId = 0;
+  }
+
+  fireworksMessage.hidden = false;
+  requestAnimationFrame(() => {
+    fireworksMessage.classList.add("active");
+  });
+}
+
+function hideFireworksMessage() {
+  if (!fireworksMessage) {
+    return;
+  }
+
+  fireworksMessage.classList.remove("active");
+
+  if (messageHideId) {
+    clearTimeout(messageHideId);
+  }
+
+  messageHideId = setTimeout(() => {
+    fireworksMessage.hidden = true;
+  }, 320);
+}
+
 function sizeFireworksCanvas() {
   if (!fireworksCanvas || !fireworksCtx) {
     return;
@@ -119,11 +153,12 @@ function launchRocket() {
 }
 
 function explode(x, y, baseHue) {
-  const count = Math.floor(randomRange(48, 90));
+  const count = Math.floor(randomRange(50, 90));
 
   for (let index = 0; index < count; index += 1) {
     const angle = randomRange(0, Math.PI * 2);
     const speed = randomRange(1.6, 6.8);
+    const life = randomRange(36, 68);
 
     sparks.push({
       x,
@@ -132,8 +167,8 @@ function explode(x, y, baseHue) {
       vy: Math.sin(angle) * speed,
       gravity: randomRange(0.03, 0.06),
       drag: randomRange(0.965, 0.99),
-      life: randomRange(36, 68),
-      ttl: randomRange(36, 68),
+      life,
+      ttl: life,
       size: randomRange(1.2, 2.8),
       hue: (baseHue + randomRange(-30, 30) + 360) % 360
     });
@@ -160,8 +195,7 @@ function drawFireworks() {
     rocket.y -= rocket.speed;
     rocket.speed *= 0.994;
 
-    const rocketColor = `hsl(${rocket.hue.toFixed(0)} 100% 64%)`;
-    fireworksCtx.strokeStyle = rocketColor;
+    fireworksCtx.strokeStyle = `hsl(${rocket.hue.toFixed(0)} 100% 64%)`;
     fireworksCtx.lineWidth = 2;
     fireworksCtx.beginPath();
     fireworksCtx.moveTo(rocket.x, rocket.y);
@@ -230,6 +264,8 @@ function stopFireworksShow() {
   if (fireworksCanvas) {
     fireworksCanvas.classList.remove("active");
   }
+
+  hideFireworksMessage();
 }
 
 function startFireworksShow(durationMs = 13000) {
@@ -241,6 +277,7 @@ function startFireworksShow(durationMs = 13000) {
   sizeFireworksCanvas();
   fireworksOn = true;
   fireworksCanvas.classList.add("active");
+  showFireworksMessage();
 
   for (let wave = 0; wave < 5; wave += 1) {
     setTimeout(() => {

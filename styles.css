@@ -4,8 +4,6 @@
   --bg-a: #fff4bf;
   --bg-b: #9af5dd;
   --bg-c: #ff8f6b;
-  --accent: #ff5a34;
-  --accent-2: #31c8aa;
   --accent-3: #ffd454;
   --yes-a: #98f4c4;
   --yes-b: #39c37f;
@@ -252,6 +250,44 @@ body {
   padding: 0 0.25em;
 }
 
+.fireworks-message {
+  position: fixed;
+  top: 8vh;
+  left: 50%;
+  transform: translate(-50%, -12px) scale(0.94);
+  width: min(92vw, 760px);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9;
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+
+.fireworks-message.active {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.fireworks-message-kicker {
+  margin: 0;
+  font-size: clamp(0.9rem, 2.8vw, 1.05rem);
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 2px 0 #0f1335, 0 0 12px #ffffff66;
+}
+
+.fireworks-message-main {
+  margin: 0.25rem 0 0;
+  font-family: "Bangers", "Impact", sans-serif;
+  font-size: clamp(1.95rem, 8vw, 4rem);
+  line-height: 1.02;
+  letter-spacing: 1px;
+  color: #fffbea;
+  text-shadow: 0 3px 0 #1f1f3b, 0 0 16px #fffb8a88;
+}
+
 #fireworksCanvas {
   position: fixed;
   inset: 0;
@@ -296,6 +332,7 @@ body {
   100% {
     transform: scale(1);
   }
+
   45% {
     transform: scale(1.06);
   }
@@ -306,6 +343,7 @@ body {
   100% {
     transform: translate(0, 0) rotate(0deg);
   }
+
   50% {
     transform: translate(18px, -12px) rotate(6deg);
   }
@@ -339,6 +377,10 @@ body {
   .btn-no {
     top: 140px;
     left: 110px;
+  }
+
+  .fireworks-message {
+    top: 10vh;
   }
 }
 
