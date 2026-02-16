@@ -13,6 +13,10 @@ const fireworksMessage = document.getElementById("fireworksMessage");
 const audioNote = document.getElementById("audioNote");
 const championsAudio = document.getElementById("championsAudio");
 
+const assetsFolderPath = "assets/";
+const defaultTrackName = "we-are-the-champions.mp3";
+const defaultTrackPath = `${assetsFolderPath}${defaultTrackName}`;
+
 const panels = [splash, invite, accepted];
 
 const dodgeLines = [
@@ -306,6 +310,106 @@ function startFireworksShow(durationMs = 13000) {
   drawFireworks();
 }
 
+function setAudioTrack(trackPath) {
+  if (!championsAudio) {
+    return;
+  }
+
+  const nextTrack = new URL(trackPath, window.location.href).href;
+  const currentTrack = championsAudio.currentSrc || championsAudio.src;
+
+  if (currentTrack === nextTrack) {
+    return;
+  }
+
+  championsAudio.src = nextTrack;
+  championsAudio.load();
+}
+
+function parseMp3TracksFromListing(listingHtml, listingUrl) {
+  const documentFragment = new DOMParser().parseFromString(listingHtml, "text/html");
+  const trackUrls = [];
+  const seen = new Set();
+
+  documentFragment.querySelectorAll("a[href]").forEach((anchor) => {
+    const href = anchor.getAttribute("href");
+
+    if (!href) {
+      return;
+    }
+
+    let candidateUrl;
+
+    try {
+      candidateUrl = new URL(href, listingUrl);
+    } catch {
+      return;
+    }
+
+    if (!candidateUrl.pathname.toLowerCase().endsWith(".mp3")) {
+      return;
+    }
+
+    if (seen.has(candidateUrl.href)) {
+      return;
+    }
+
+    seen.add(candidateUrl.href);
+    trackUrls.push(candidateUrl);
+  });
+
+  return trackUrls;
+}
+
+function pickPreferredTrack(trackUrls) {
+  if (!trackUrls.length) {
+    return null;
+  }
+
+  const sortedTracks = [...trackUrls].sort((left, right) =>
+    left.pathname.localeCompare(right.pathname, "es", { sensitivity: "base" })
+  );
+
+  const customTrack = sortedTracks.find(
+    (track) => !track.pathname.toLowerCase().endsWith(`/${defaultTrackName}`)
+  );
+
+  return customTrack || sortedTracks[0];
+}
+
+async function selectTrackFromAssets() {
+  if (!championsAudio) {
+    return;
+  }
+
+  try {
+    const response = await fetch(assetsFolderPath, { cache: "no-store" });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const listingHtml = await response.text();
+    const trackUrls = parseMp3TracksFromListing(listingHtml, response.url || window.location.href);
+    const preferredTrack = pickPreferredTrack(trackUrls);
+
+    if (preferredTrack) {
+      setAudioTrack(preferredTrack.href);
+    }
+  } catch {
+    // Keep default track when the server does not expose directory listings.
+  }
+}
+
+function initializeAudioTrack() {
+  if (!championsAudio) {
+    return;
+  }
+
+  setAudioTrack(defaultTrackPath);
+  void selectTrackFromAssets();
+}
+
 function playChampions() {
   if (!championsAudio) {
     return;
@@ -389,4 +493,5 @@ if (championsAudio) {
   });
 }
 
+initializeAudioTrack();
 sizeFireworksCanvas();
