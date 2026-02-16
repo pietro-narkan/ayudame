@@ -63,6 +63,20 @@ function moveNoButton() {
   noBtn.style.top = `${nextY}px`;
 }
 
+function placeNoButtonBelowYes() {
+  const maxX = Math.max(8, choices.clientWidth - noBtn.offsetWidth - 8);
+  const maxY = Math.max(8, choices.clientHeight - noBtn.offsetHeight - 8);
+
+  const centeredX = yesBtn.offsetLeft + (yesBtn.offsetWidth - noBtn.offsetWidth) / 2;
+  const belowY = yesBtn.offsetTop + yesBtn.offsetHeight + 12;
+
+  const nextX = Math.min(maxX, Math.max(8, Math.round(centeredX)));
+  const nextY = Math.min(maxY, Math.max(8, Math.round(belowY)));
+
+  noBtn.style.left = `${nextX}px`;
+  noBtn.style.top = `${nextY}px`;
+}
+
 function dodge(event) {
   if (event) {
     event.preventDefault();
@@ -534,7 +548,7 @@ startBtn.addEventListener("click", () => {
   stopChampions();
   setPanel(invite);
   burstConfetti(55);
-  requestAnimationFrame(moveNoButton);
+  requestAnimationFrame(placeNoButtonBelowYes);
 });
 
 yesBtn.addEventListener("click", () => {
