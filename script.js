@@ -14,8 +14,7 @@ const audioNote = document.getElementById("audioNote");
 const championsAudio = document.getElementById("championsAudio");
 
 const assetsFolderPath = "assets/";
-const defaultTrackName = "we-are-the-champions.mp3";
-const defaultTrackPath = `${assetsFolderPath}${defaultTrackName}`;
+const defaultTrackPath = championsAudio?.querySelector("source")?.getAttribute("src") || "";
 
 const panels = [splash, invite, accepted];
 
@@ -41,6 +40,7 @@ let fireworksOn = false;
 let messageHideId = 0;
 let canvasWidth = window.innerWidth;
 let canvasHeight = window.innerHeight;
+let audioTrackSelection = Promise.resolve();
 
 function setPanel(nextPanel) {
   panels.forEach((panel) => {
@@ -326,6 +326,19 @@ function setAudioTrack(trackPath) {
   championsAudio.load();
 }
 
+function getTrackFileName(trackPath) {
+  const withoutHash = trackPath.split("#")[0];
+  const withoutQuery = withoutHash.split("?")[0];
+  const segments = withoutQuery.split("/");
+  const encodedName = segments[segments.length - 1] || "";
+
+  try {
+    return decodeURIComponent(encodedName).toLowerCase();
+  } catch {
+    return encodedName.toLowerCase();
+  }
+}
+
 function parseMp3TracksFromListing(listingHtml, listingUrl) {
   const documentFragment = new DOMParser().parseFromString(listingHtml, "text/html");
   const trackUrls = [];
@@ -370,11 +383,54 @@ function pickPreferredTrack(trackUrls) {
     left.pathname.localeCompare(right.pathname, "es", { sensitivity: "base" })
   );
 
+  const fallbackTrackName = getTrackFileName(defaultTrackPath);
   const customTrack = sortedTracks.find(
-    (track) => !track.pathname.toLowerCase().endsWith(`/${defaultTrackName}`)
+    (track) => getTrackFileName(track.pathname) !== fallbackTrackName
   );
 
   return customTrack || sortedTracks[0];
+}
+
+async function requestAssetsListing() {
+  try {
+    const response = await fetch(assetsFolderPath, { cache: "no-store" });
+
+    if (response.ok) {
+      return {
+        listingHtml: await response.text(),
+        listingUrl: response.url || window.location.href
+      };
+    }
+  } catch {
+    // Continue with XHR fallback.
+  }
+
+  return new Promise((resolve) => {
+    try {
+      const request = new XMLHttpRequest();
+      request.open("GET", assetsFolderPath, true);
+
+      request.onload = () => {
+        const hasValidHttpStatus = request.status >= 200 && request.status < 400;
+        const hasLocalFileResponse = request.status === 0 && !!request.responseText;
+
+        if (hasValidHttpStatus || hasLocalFileResponse) {
+          resolve({
+            listingHtml: request.responseText,
+            listingUrl: request.responseURL || window.location.href
+          });
+          return;
+        }
+
+        resolve(null);
+      };
+
+      request.onerror = () => resolve(null);
+      request.send();
+    } catch {
+      resolve(null);
+    }
+  });
 }
 
 async function selectTrackFromAssets() {
@@ -383,14 +439,13 @@ async function selectTrackFromAssets() {
   }
 
   try {
-    const response = await fetch(assetsFolderPath, { cache: "no-store" });
+    const listing = await requestAssetsListing();
 
-    if (!response.ok) {
+    if (!listing) {
       return;
     }
 
-    const listingHtml = await response.text();
-    const trackUrls = parseMp3TracksFromListing(listingHtml, response.url || window.location.href);
+    const trackUrls = parseMp3TracksFromListing(listing.listingHtml, listing.listingUrl);
     const preferredTrack = pickPreferredTrack(trackUrls);
 
     if (preferredTrack) {
@@ -406,11 +461,14 @@ function initializeAudioTrack() {
     return;
   }
 
-  setAudioTrack(defaultTrackPath);
-  void selectTrackFromAssets();
+  if (defaultTrackPath) {
+    setAudioTrack(defaultTrackPath);
+  }
+
+  audioTrackSelection = selectTrackFromAssets();
 }
 
-function playChampions() {
+async function playChampions() {
   if (!championsAudio) {
     return;
   }
@@ -420,14 +478,24 @@ function playChampions() {
   }
 
   championsAudio.currentTime = 0;
-  const playPromise = championsAudio.play();
+  try {
+    await championsAudio.play();
+    return;
+  } catch {
+    // Try one more time after track detection finishes.
+  }
 
-  if (playPromise && typeof playPromise.catch === "function") {
-    playPromise.catch(() => {
-      if (audioNote) {
-        audioNote.hidden = false;
-      }
-    });
+  try {
+    await audioTrackSelection;
+    championsAudio.currentTime = 0;
+    await championsAudio.play();
+    return;
+  } catch {
+    // Keep note visible below.
+  }
+
+  if (audioNote) {
+    audioNote.hidden = false;
   }
 }
 
@@ -463,7 +531,7 @@ yesBtn.addEventListener("click", () => {
   setPanel(accepted);
   burstConfetti(220);
   startFireworksShow();
-  playChampions();
+  void playChampions();
 });
 
 replayBtn.addEventListener("click", () => {
@@ -490,6 +558,8 @@ if (championsAudio) {
     if (audioNote) {
       audioNote.hidden = false;
     }
+
+    audioTrackSelection = selectTrackFromAssets();
   });
 }
 
